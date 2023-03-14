@@ -58,32 +58,53 @@ app.get("/", async function (req, res) {
       .catch((error) => {
         console.log(error);
       });
-      res.redirect("/");
-  }else{
+    res.redirect("/");
+  } else {
     res.render("list", { listTitle: "today", newListItems: items });
   }
-  console.log(items);
 });
+
+//用户自定义列表:
+
+  app.get("/:customList",(req,res)=>{
+    const customList = req.params.customList;
+
+  })
 
 app.post("/", function (req, res) {
-  const item = req.body.newItem;
+  const itemName = req.body.newItem;
 
-  if (req.body.list === "Work") {
-    workItems.push(item);
-    res.redirect("/work");
-  } else {
-    items.push(item);
-    res.redirect("/");
-  }
+  const newItem = new Item({
+    name: itemName,
+  });
+
+  //保存在Item这个model里面，页面载入的list就是这个models
+  newItem.save();
+
+  res.redirect("/");
 });
 
-app.get("/work", function (req, res) {
-  res.render("list", { listTitle: "Work List", newListItems: workItems });
+//删除item
+app.post("/delete", (req, res) => {
+  let _idDelete = req.body.checkbox;
+  console.log(_idDelete);
+  Item.findByIdAndRemove(_idDelete)
+    .then(() => {
+      console.log("successfuly deleted");
+      res.redirect("/");
+    })
+    .catch((error) => {
+      console.log(error);
+    });
 });
 
-app.get("/about", function (req, res) {
-  res.render("about");
-});
+// app.get("/work", function (req, res) {
+//   res.render("list", { listTitle: "Work List", newListItems: workItems });
+// });
+
+// app.get("/about", function (req, res) {
+//   res.render("about");
+// });
 
 app.listen(3000, function () {
   console.log("Server started on port 3000");
