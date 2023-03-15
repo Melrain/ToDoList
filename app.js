@@ -72,28 +72,29 @@ const List = mongoose.model("list", {
   itemList: [itemSchema],
 });
 
-
-
-app.get("/:customName",(req, res) => {
+app.get("/:customName", (req, res) => {
   const customTitle = req.params.customName;
-  List.findOne({name:customTitle}).then((result)=>{
-    if(result){
-      console.log("已存在，渲染已存在的列表");
-      res.render("list.ejs", { listTitle: customTitle, newListItems: result.itemList})
-    }else{
-      console.log("可以创建");
-      const customList = new List({
-        name: customTitle,
-        itemList: defaultList,
-      });
-      customList.save();
-      res.redirect("/"+customTitle);
-    }
-  }).catch((error)=>{
-    console.log(error);
-  })
-
-
+  List.findOne({ name: customTitle })
+    .then((result) => {
+      if (result) {
+        console.log("已存在，渲染已存在的列表");
+        res.render("list.ejs", {
+          listTitle: customTitle,
+          newListItems: result.itemList,
+        });
+      } else {
+        console.log("可以创建");
+        const customList = new List({
+          name: customTitle,
+          itemList: defaultList,
+        });
+        customList.save();
+        res.redirect("/" + customTitle);
+      }
+    })
+    .catch((error) => {
+      console.log(error);
+    });
 });
 
 app.post("/", function (req, res) {
@@ -111,25 +112,22 @@ app.post("/", function (req, res) {
 
 //删除item
 app.post("/delete", (req, res) => {
-  let _idDelete = req.body.checkbox;
-  console.log(_idDelete);
-  Item.findByIdAndRemove(_idDelete)
-    .then(() => {
-      console.log("successfuly deleted");
-      res.redirect("/");
-    })
-    .catch((error) => {
-      console.log(error);
-    });
-});
+  const listName = req.body.listName; //用input:hidden获得页面的Title
+  console.log(listName)
+  const _idDelete = req.body.checkbox;
 
-// app.get("/work", function (req, res) {
-//   res.render("list", { listTitle: "Work List", newListItems: workItems });
-// });
 
-// app.get("/about", function (req, res) {
-//   res.render("about");
-// });
+    console.log(_idDelete);
+    Item.findByIdAndRemove(_idDelete)
+      .then(() => {
+        console.log("successfuly deleted");
+        res.redirect("/");
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  } 
+)
 
 app.listen(3000, function () {
   console.log("Server started on port 3000");
