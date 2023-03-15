@@ -33,7 +33,7 @@ const item3 = new Item({
   name: "<--hit this to delete a item",
 });
 
-const itemsArray = [item1, item2, item3];
+const defaultList = [item1, item2, item3];
 
 //mongoose
 
@@ -51,9 +51,9 @@ app.get("/", async function (req, res) {
   let items = await Item.find({});
 
   if (items.length === 0) {
-    Item.insertMany(itemsArray)
+    Item.insertMany(defaultList)
       .then(() => {
-        console.log("successfully added" + itemsArray);
+        console.log("successfully added" + defaultList);
       })
       .catch((error) => {
         console.log(error);
@@ -65,11 +65,36 @@ app.get("/", async function (req, res) {
 });
 
 //用户自定义列表:
+//自定义一个model
 
-  app.get("/:customList",(req,res)=>{
-    const customList = req.params.customList;
+const List = mongoose.model("list", {
+  name: String,
+  itemList: [itemSchema],
+});
 
+
+
+app.get("/:customName",(req, res) => {
+  const customTitle = req.params.customName;
+  List.findOne({name:customTitle}).then((result)=>{
+    if(result){
+      console.log("已存在，渲染已存在的列表");
+      res.render("list.ejs", { listTitle: customTitle, newListItems: result.itemList})
+    }else{
+      console.log("可以创建");
+      const customList = new List({
+        name: customTitle,
+        itemList: defaultList,
+      });
+      customList.save();
+      res.redirect("/"+customTitle);
+    }
+  }).catch((error)=>{
+    console.log(error);
   })
+
+
+});
 
 app.post("/", function (req, res) {
   const itemName = req.body.newItem;
