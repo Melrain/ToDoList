@@ -60,7 +60,7 @@ app.get("/", async function (req, res) {
       });
     res.redirect("/");
   } else {
-    res.render("list", { listTitle: "today", newListItems: items });
+    res.render("list", { listTitle: "Today", newListItems: items });
   }
 });
 
@@ -97,17 +97,28 @@ app.get("/:customName", (req, res) => {
     });
 });
 
+//添加物品
 app.post("/", function (req, res) {
   const itemName = req.body.newItem;
-
+  const listName = req.body.list;
   const newItem = new Item({
     name: itemName,
   });
 
-  //保存在Item这个model里面，页面载入的list就是这个models
-  newItem.save();
+  if(listName === "Today"){
+    newItem.save();
+    res.redirect("/");
+  }else{
+    List.findOne({name:listName}).then((result)=>{
+      console.log(result);
+      result.itemList.push(newItem);
+      result.save();
+      res.redirect("/"+listName);
+    }).catch((error)=>{
+      console.log(error);
+    })
+  };
 
-  res.redirect("/");
 });
 
 //删除item
