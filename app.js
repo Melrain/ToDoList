@@ -8,7 +8,9 @@ const _ = require("lodash");
 const mongoose = require("mongoose");
 
 async function Main() {
-  await mongoose.connect("mongodb://127.0.0.1:27017/listDB");
+  await mongoose.connect(
+    "mongodb+srv://melrain:wszy1989@cluster0.azcsaaz.mongodb.net/listDB"
+  );
   console.log("已启动数据库");
 }
 
@@ -73,7 +75,6 @@ const List = mongoose.model("list", {
   itemList: [itemSchema],
 });
 
-
 app.get("/:customName", (req, res) => {
   const customTitle = _.capitalize(req.params.customName);
   List.findOne({ name: customTitle })
@@ -106,29 +107,39 @@ app.post("/", function (req, res) {
   const newItem = new Item({
     name: itemName,
   });
-  
-  if(listName === "Today"){
-    newItem.save();
-    res.redirect("/");
-  }else{
-    List.findOne({name:listName}).then((result)=>{
-      console.log(result);
-      result.itemList.push(newItem);
-      result.save();
-      res.redirect("/"+listName);
-    }).catch((error)=>{
-      console.log(error);
-    })
-  };
 
+  if (listName === "Today") {
+    async function refresh(){
+      await newItem.save();
+      res.redirect("/");
+    }
+
+    refresh();
+    // newItem.save();
+    // res.redirect("/");
+  } else {
+    List.findOne({ name: listName })
+      .then((result) => {
+        console.log(result);
+        result.itemList.push(newItem);
+        async function refresh (){
+          await result.save();
+          res.redirect("/" + listName);
+        }
+        refresh();
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }
 });
 
 //删除item
 app.post("/delete", (req, res) => {
   const listName = req.body.list; //用input:hidden获得页面的Title
-  console.log(listName)
+  console.log(listName);
   const _idDelete = req.body.checkbox;
-  if(listName === "Today"){
+  if (listName === "Today") {
     console.log(_idDelete);
     Item.findByIdAndRemove(_idDelete)
       .then(() => {
@@ -138,22 +149,23 @@ app.post("/delete", (req, res) => {
       .catch((error) => {
         console.log(error);
       });
-  }else{
-    List.findOne({name:listName}).then((result)=>{
-      console.log(_idDelete);
-      console.log(result);
-      result.itemList.pull({_id:_idDelete});
-      result.save();
-
-      res.redirect("/"+listName);
-    }).catch((error)=>{
-      console.log(error);
-    })
-    
+  } else {
+    List.findOne({ name: listName })
+      .then((result) => {
+        console.log(_idDelete);
+        console.log(result);
+        result.itemList.pull({ _id: _idDelete });
+        async function refresh (){
+          await result.save();
+          res.redirect("/" + listName);
+        }
+        refresh();
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   }
-  
-  } 
-)
+});
 
 app.listen(3000, function () {
   console.log("Server started on port 3000");
