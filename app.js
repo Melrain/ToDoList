@@ -2,6 +2,7 @@
 
 const express = require("express");
 const bodyParser = require("body-parser");
+const _ = require("lodash");
 
 //mongoose
 const mongoose = require("mongoose");
@@ -22,15 +23,15 @@ const itemSchema = mongoose.Schema({
 const Item = mongoose.model("Item", itemSchema);
 
 const item1 = new Item({
-  name: "welcome to the toDoList",
+  name: "欢迎来到事件列表",
 });
 
 const item2 = new Item({
-  name: "Hit the + button to add new item",
+  name: "点击+号可以增加事件",
 });
 
 const item3 = new Item({
-  name: "<--hit this to delete a item",
+  name: "<<<<====按这个小格子可以删除",
 });
 
 const defaultList = [item1, item2, item3];
@@ -72,8 +73,9 @@ const List = mongoose.model("list", {
   itemList: [itemSchema],
 });
 
+
 app.get("/:customName", (req, res) => {
-  const customTitle = req.params.customName;
+  const customTitle = _.capitalize(req.params.customName);
   List.findOne({ name: customTitle })
     .then((result) => {
       if (result) {
@@ -104,7 +106,7 @@ app.post("/", function (req, res) {
   const newItem = new Item({
     name: itemName,
   });
-
+  
   if(listName === "Today"){
     newItem.save();
     res.redirect("/");
@@ -123,11 +125,10 @@ app.post("/", function (req, res) {
 
 //删除item
 app.post("/delete", (req, res) => {
-  const listName = req.body.listName; //用input:hidden获得页面的Title
+  const listName = req.body.list; //用input:hidden获得页面的Title
   console.log(listName)
   const _idDelete = req.body.checkbox;
-
-
+  if(listName === "Today"){
     console.log(_idDelete);
     Item.findByIdAndRemove(_idDelete)
       .then(() => {
@@ -137,6 +138,20 @@ app.post("/delete", (req, res) => {
       .catch((error) => {
         console.log(error);
       });
+  }else{
+    List.findOne({name:listName}).then((result)=>{
+      console.log(_idDelete);
+      console.log(result);
+      result.itemList.pull({_id:_idDelete});
+      result.save();
+
+      res.redirect("/"+listName);
+    }).catch((error)=>{
+      console.log(error);
+    })
+    
+  }
+  
   } 
 )
 
